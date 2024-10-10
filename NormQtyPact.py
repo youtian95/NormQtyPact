@@ -4,6 +4,9 @@
 # 
 # Dependancy: 
 # pypiwin32, json
+# 
+# Usage:
+# python NormQtyPact.py --NumOfStories 3 --FloorAreaList '1,1,1' --Occupancy1Type 'APARTMENT,APARTMENT,APARTMENT' --Occupancy2Type 'none,none,none' --Occupancy3Type 'none,none,none' --Occupancy1Area '1,1,1' --Occupancy2Area '0,0,0' --Occupancy3Area '0,0,0'
 ########################################################
 
 import os
