@@ -1,6 +1,6 @@
 ########################################################
 # Use FEMA P-58_Normative Quantity Estimation Tool, which is an Excel sheet, 
-# in Python script.
+# with Python script.
 # 
 # Dependancy: 
 # pypiwin32, json
@@ -10,6 +10,8 @@ import os
 import csv
 from win32com.client import Dispatch
 import json
+import sys
+import argparse
 
 
 class NormQtyPact:
@@ -193,9 +195,10 @@ class NormQtyPact:
                 else:
                     pass
                 PactUnit = ws.Cells(i_row,19).value
+                PactUnit_float = float("".join(list(filter(str.isdigit,PactUnit))))
                 if UnitType in ['ft','ea','ft2']:
                     MedianQuantity = PerformanceGroupQuantity * \
-                        float("".join(list(filter(str.isdigit,PactUnit))))
+                        PactUnit_float
                 else:
                     MedianQuantity = PerformanceGroupQuantity
                     UnitType = 'ea'
@@ -204,10 +207,11 @@ class NormQtyPact:
                 ComponentContents = {
                     "location": str(i_floor),
                     "direction": Direction,
-                    "median_quantity": str(MedianQuantity),
+                    "Theta_0": str(MedianQuantity),
                     "distribution":"lognormal",
                     "cov": str(QuantityDispersion),
-                    "unit": UnitType.lower()
+                    "unit": UnitType.lower(),
+                    "Blocks": str(MedianQuantity / PactUnit_float)
                 }
                 if jsondata.get(PactNo) is None:
                     jsondata[PactNo] = [ComponentContents]
@@ -219,15 +223,66 @@ class NormQtyPact:
         except Exception as e:
             print(e)
 
+        # write to a json file
         with open("PelucunComponentDirectory.json", "w") as fp:
             json.dump(jsondata, fp, indent = 4)
+
+        # write to a csv file
+        with open('PelucunComponentDirectory.csv','w',encoding='utf-8-sig',newline='') as f :
+            writer = csv.writer(f)
+            writer.writerow(['ID','Units','Location','Direction','Theta_0','Blocks','Family','Theta_1','Comment'])
+            for key in jsondata.keys():
+                keyName = '.'.join([key[0], key[1:3], key[3:]]) # C1011.001c -> C.10.11.001c
+                for item in jsondata[key]:
+                    writer.writerow([keyName, item['unit'], item['location'], item['direction'] if item['direction'] != '3' else '0', item['Theta_0'], item['Blocks']])
 
         docApp.Application.Quit()
 
 
-obj = NormQtyPact(NumOfStories = 20,
-    FloorAreaList = [11721.9]*20,
-    Occupancy1Type = ['APARTMENT']*20, Occupancy2Type = ['none']*20, Occupancy3Type = ['none']*20,
-    Occupancy1Area = [1]*20, Occupancy2Area = [0]*20,Occupancy3Area = [0]*20)
-obj.Output_PactComponentDirectory()
-obj.Output_PelicunComponentDirectory()
+def main(args):
+    '''
+    Parameters:
+        NumOfStories (int): Number of stories. e.g. 3
+        FloorAreaList (str): Floor area of each story. e.g. '1,1,1'
+        Occupancy1Type (str): 1st Occupancy type of each story. e.g. 'APARTMENT,APARTMENT,APARTMENT'. 
+        Occupancy2Type (str): 2nd Occupancy type of each story. e.g. 'none,none,none'
+        Occupancy3Type (str): 3rd Occupancy type of each story. e.g. 'none,none,none'
+        Occupancy1Area (str): area percentage of 1st Occupancy of each story. e.g. '1,1,1'
+        Occupancy2Area (str): area percentage of 2nd Occupancy of each story. e.g. '0,0,0'
+        Occupancy3Area (str): area percentage of 3rd Occupancy of each story. e.g. '0,0,0'
+    '''
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--NumOfStories", type=int, default=3)
+    parser.add_argument("--FloorAreaList", type=str, default='1,1,1')
+    parser.add_argument("--Occupancy1Type", type=str, default='APARTMENT,APARTMENT,APARTMENT')
+    parser.add_argument("--Occupancy2Type", type=str, default='none,none,none')
+    parser.add_argument("--Occupancy3Type", type=str, default='none,none,none')
+    parser.add_argument("--Occupancy1Area", type=str, default='1,1,1')
+    parser.add_argument("--Occupancy2Area", type=str, default='0,0,0')
+    parser.add_argument("--Occupancy3Area", type=str, default='0,0,0')
+    args = parser.parse_args(args)
+
+    NumOfStories = args.NumOfStories
+    FloorAreaList = list(map(float,args.FloorAreaList.split(',')))
+    Occupancy1Type = args.Occupancy1Type.split(',')
+    Occupancy2Type = args.Occupancy2Type.split(',')
+    Occupancy3Type = args.Occupancy3Type.split(',')
+    Occupancy1Area = list(map(float,args.Occupancy1Area.split(',')))
+    Occupancy2Area = list(map(float,args.Occupancy2Area.split(',')))
+    Occupancy3Area = list(map(float,args.Occupancy3Area.split(',')))
+
+    # create a instance of NormQtyPact
+    obj = NormQtyPact(NumOfStories = NumOfStories,
+        FloorAreaList = FloorAreaList,
+        Occupancy1Type = Occupancy1Type,
+        Occupancy2Type = Occupancy2Type,
+        Occupancy3Type = Occupancy3Type,
+        Occupancy1Area = Occupancy1Area,
+        Occupancy2Area = Occupancy2Area,
+        Occupancy3Area = Occupancy3Area)
+    obj.Output_PactComponentDirectory()
+    obj.Output_PelicunComponentDirectory()
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
