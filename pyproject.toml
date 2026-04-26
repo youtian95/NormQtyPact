@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "normqtypact"
+version = "0.1.0"
+authors = [
+    {name = "Tian You", email = "youtian@njtech.edu.cn"},
+]
+description = "Generate non-structural component quantity files using the FEMA P-58 Normative Quantity Estimation Tool"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.7"
+dependencies = [
+    "pypiwin32",
+]
+keywords = ["FEMA P-58", "PACT", "Pelicun", "seismic", "loss assessment"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: Microsoft :: Windows",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Scientific/Engineering",
+]
+
+[project.scripts]
+normqtypact = "normqtypact.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["normqtypact"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "normqtypact/",
+    "examples/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/youtian95/NormQtyPact"
