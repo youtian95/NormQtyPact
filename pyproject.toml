@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "normqtypact"
-version = "0.1.0"
+version = "0.1.1"
 authors = [
     {name = "Tian You", email = "youtian@njtech.edu.cn"},
 ]
@@ -13,7 +13,7 @@ readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.7"
 dependencies = [
-    "pypiwin32",
+    "pywin32",
 ]
 keywords = ["FEMA P-58", "PACT", "Pelicun", "seismic", "loss assessment"]
 classifiers = [
